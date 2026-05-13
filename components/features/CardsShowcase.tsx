@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Swords, Shield, Flame, Zap, Wind, Waves } from "lucide-react";
 
 const cards = [
   {
@@ -11,7 +10,7 @@ const cards = [
     element: "Dark",
     power: 95,
     rarity: "Legendary",
-    Icon: Swords,
+    image: "/card/IMG_20251106_110212_893.jpg",
     gemColor: "#f97316",
     cardBg: "from-violet-900 via-purple-800 to-indigo-900",
     accentColor: "#f97316",
@@ -24,7 +23,7 @@ const cards = [
     element: "Arcane",
     power: 88,
     rarity: "Epic",
-    Icon: Shield,
+    image: "/card/IMG_20251106_110222_361.jpg",
     gemColor: "#a855f7",
     cardBg: "from-purple-900 via-violet-800 to-purple-900",
     accentColor: "#a855f7",
@@ -37,7 +36,7 @@ const cards = [
     element: "Fire",
     power: 92,
     rarity: "Legendary",
-    Icon: Flame,
+    image: "/card/IMG_20251106_110232_730.jpg",
     gemColor: "#ef4444",
     cardBg: "from-red-900 via-orange-900 to-purple-900",
     accentColor: "#ef4444",
@@ -50,7 +49,7 @@ const cards = [
     element: "Lightning",
     power: 85,
     rarity: "Epic",
-    Icon: Zap,
+    image: "/card/IMG_20251106_110207_791.jpg",
     gemColor: "#fbbf24",
     cardBg: "from-yellow-900 via-amber-900 to-purple-900",
     accentColor: "#fbbf24",
@@ -63,7 +62,7 @@ const cards = [
     element: "Wind",
     power: 78,
     rarity: "Rare",
-    Icon: Wind,
+    image: "/card/received_3225862507641179.jpeg",
     gemColor: "#34d399",
     cardBg: "from-emerald-900 via-teal-900 to-purple-900",
     accentColor: "#34d399",
@@ -76,7 +75,7 @@ const cards = [
     element: "Water",
     power: 81,
     rarity: "Epic",
-    Icon: Waves,
+    image: "/card/received_10007565515943113.png",
     gemColor: "#38bdf8",
     cardBg: "from-sky-900 via-blue-900 to-purple-900",
     accentColor: "#38bdf8",
@@ -160,17 +159,31 @@ function GameCard({ card, isCenter }: { card: typeof cards[0]; isCenter: boolean
                 clipPath: "polygon(50% 0%, 100% 35%, 80% 100%, 20% 100%, 0% 35%)",
               }}
             />
-            {/* Icon — fantasy element symbol inside pentagon */}
-            <div className="relative w-14 h-14 flex items-center justify-center">
-              <card.Icon
-                className="w-9 h-9"
-                color="#ffffff"
-                strokeWidth={2.25}
+            {/* Meme portrait — cropped to pentagon shape, fills cover */}
+            <div
+              className="absolute inset-[3px] overflow-hidden"
+              style={{
+                clipPath: "polygon(50% 0%, 100% 35%, 80% 100%, 20% 100%, 0% 35%)",
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={card.image}
+                alt={card.name}
+                className="w-full h-full object-cover"
                 style={{
-                  filter: `drop-shadow(0 0 6px ${card.gemColor}) drop-shadow(0 2px 4px rgba(0,0,0,0.6))`,
+                  filter: `saturate(1.15) contrast(1.08) brightness(1.02) drop-shadow(0 2px 4px rgba(0,0,0,0.5))`,
                 }}
               />
             </div>
+            {/* Inner glow ring on top of image — subtle gemColor tint at edges */}
+            <div
+              className="absolute inset-[3px] pointer-events-none"
+              style={{
+                clipPath: "polygon(50% 0%, 100% 35%, 80% 100%, 20% 100%, 0% 35%)",
+                boxShadow: `inset 0 0 12px ${card.gemColor}80`,
+              }}
+            />
           </div>
         </div>
 
