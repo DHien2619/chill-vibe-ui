@@ -13,12 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lumina — Design Studio",
-  description: "We craft digital experiences that feel alive. Beautiful, fast, memorable.",
-  openGraph: {
-    title: "Lumina — Design Studio",
-    description: "We craft digital experiences that feel alive.",
-  },
+  title: "Kwtor — Fantasy Card Game",
+  description: "Collect powerful cards, battle epic enemies, and dominate the realm. Available on iPhone, Android & iPad.",
 };
 
 export default function RootLayout({
