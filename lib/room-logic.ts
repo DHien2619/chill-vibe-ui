@@ -8,7 +8,25 @@ export type Player = {
   isBot?: boolean;
   lastSeen?: number;
   isDead?: boolean;
+  avatar?: string;
 };
+
+export const AVATARS: string[] = [
+  "/avatars/av1.jpg",
+  "/avatars/av2.jpg",
+  "/avatars/av3.jpg",
+  "/avatars/av4.jpg",
+  "/avatars/av5.jpg",
+  "/avatars/av6.jpg",
+  "/avatars/av7.jpg",
+  "/avatars/av8.jpg",
+];
+
+function pickAvatar(usedAvatars: Set<string>): string {
+  const available = AVATARS.filter((a) => !usedAvatars.has(a));
+  const pool = available.length > 0 ? available : AVATARS;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
 
 export type RoomStatus = "lobby" | "revealing" | "playing" | "ended";
 export type Phase = "night" | "day";
@@ -108,6 +126,7 @@ export function joinSharedRoom(room: RoomState | null, name: string): JoinResult
       joinedAt: now,
       lastSeen: now,
       isHost: true,
+      avatar: pickAvatar(new Set()),
     };
     const newRoom: RoomState = {
       code: SHARED_CODE,
@@ -132,12 +151,16 @@ export function joinSharedRoom(room: RoomState | null, name: string): JoinResult
   );
   if (dup) return { ok: false, error: "Tên này đã có người dùng" };
 
+  const used = new Set(
+    active.players.map((p) => p.avatar).filter(Boolean) as string[]
+  );
   const me: Player = {
     id: generatePlayerId(),
     name: trimmed,
     joinedAt: now,
     lastSeen: now,
     isHost: false,
+    avatar: pickAvatar(used),
   };
   const players = [...active.players, me];
   return {
@@ -196,12 +219,16 @@ export function addBot(room: RoomState, byHostId: string): RoomState {
       ? candidates[Math.floor(Math.random() * candidates.length)]
       : `Bot ${room.players.length + 1}`;
 
+  const usedAvatars = new Set(
+    room.players.map((p) => p.avatar).filter(Boolean) as string[]
+  );
   const bot: Player = {
     id: generatePlayerId(),
     name: pick,
     joinedAt: Date.now(),
     isHost: false,
     isBot: true,
+    avatar: pickAvatar(usedAvatars),
   };
   const players = [...room.players, bot];
   return {

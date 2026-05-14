@@ -1,14 +1,16 @@
 "use client";
 
+import { memo } from "react";
 import { HelpCircle, Bot, Crown, Skull } from "lucide-react";
 
-export function PlayerAvatar({
+function PlayerAvatarRaw({
   name,
   isMe = false,
   isHost = false,
   isBot = false,
   isEmpty = false,
   isDead = false,
+  avatar,
   size = "md",
   showName = true,
   onClick,
@@ -21,6 +23,7 @@ export function PlayerAvatar({
   isBot?: boolean;
   isEmpty?: boolean;
   isDead?: boolean;
+  avatar?: string;
   size?: "sm" | "md" | "lg";
   showName?: boolean;
   onClick?: () => void;
@@ -30,7 +33,6 @@ export function PlayerAvatar({
   const dim = size === "sm" ? 64 : size === "lg" ? 120 : 88;
   const iconSize = size === "sm" ? 28 : size === "lg" ? 56 : 40;
 
-  // Border priority: host (gold) > me (purple) > default
   const borderColor = isHost
     ? "#fbbf24"
     : isMe
@@ -81,26 +83,40 @@ export function PlayerAvatar({
       >
         {!isEmpty && (
           <>
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  "radial-gradient(circle at 30% 25%, rgba(192,132,252,0.18), transparent 60%)",
-              }}
-            />
-            {isBot ? (
-              <Bot size={iconSize} color="#9d7fd4" strokeWidth={1.8} />
+            {avatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={avatar}
+                alt={name || "avatar"}
+                className="absolute inset-0 w-full h-full object-cover"
+                loading="lazy"
+                decoding="async"
+              />
             ) : (
-              <HelpCircle size={iconSize} color="#c4b3e0" strokeWidth={1.5} />
+              <>
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background:
+                      "radial-gradient(circle at 30% 25%, rgba(192,132,252,0.18), transparent 60%)",
+                  }}
+                />
+                {isBot ? (
+                  <Bot size={iconSize} color="#9d7fd4" strokeWidth={1.8} />
+                ) : (
+                  <HelpCircle size={iconSize} color="#c4b3e0" strokeWidth={1.5} />
+                )}
+              </>
             )}
 
             {isBot && !isHost && (
               <div
-                className="absolute top-1 right-1 px-1.5 py-0.5 rounded-md text-[8px] font-black tracking-wider"
+                className="absolute top-1 right-1 px-1.5 py-0.5 rounded-md text-[8px] font-black tracking-wider z-10"
                 style={{
-                  background: "rgba(157,127,212,0.25)",
-                  color: "#c4b3e0",
-                  border: "1px solid rgba(192,132,252,0.3)",
+                  background: "rgba(157,127,212,0.55)",
+                  color: "#fff",
+                  border: "1px solid rgba(192,132,252,0.6)",
+                  backdropFilter: "blur(2px)",
                 }}
               >
                 BOT
@@ -109,7 +125,7 @@ export function PlayerAvatar({
 
             {isHost && (
               <div
-                className="absolute top-1 right-1 flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[8px] font-black tracking-wider"
+                className="absolute top-1 right-1 flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[8px] font-black tracking-wider z-10"
                 style={{
                   background: "#fbbf24",
                   color: "#0e0818",
@@ -123,7 +139,7 @@ export function PlayerAvatar({
 
             {isMe && (
               <div
-                className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded-md text-[8px] font-black tracking-wider"
+                className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded-md text-[8px] font-black tracking-wider z-10"
                 style={{
                   background: "#c084fc",
                   color: "#0e0818",
@@ -136,10 +152,10 @@ export function PlayerAvatar({
 
             {isDead && (
               <div
-                className="absolute inset-0 flex items-center justify-center"
+                className="absolute inset-0 flex items-center justify-center z-10"
                 style={{
                   background:
-                    "radial-gradient(circle, rgba(239,68,68,0.25), transparent 70%)",
+                    "radial-gradient(circle, rgba(239,68,68,0.45), rgba(0,0,0,0.4) 80%)",
                 }}
               >
                 <Skull
@@ -147,7 +163,7 @@ export function PlayerAvatar({
                   color="#fca5a5"
                   strokeWidth={2}
                   style={{
-                    filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.6))",
+                    filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.8))",
                   }}
                 />
               </div>
@@ -198,3 +214,5 @@ export function PlayerAvatar({
     </Wrapper>
   );
 }
+
+export const PlayerAvatar = memo(PlayerAvatarRaw);
