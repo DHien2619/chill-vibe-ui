@@ -25,14 +25,6 @@ export const AVATARS: string[] = [
   "/avatars/av11.jpg",
   "/avatars/av12.jpg",
   "/avatars/av13.jpg",
-  "/avatars/av14.jpg",
-  "/avatars/av15.jpg",
-  "/avatars/av16.jpg",
-  "/avatars/av17.jpg",
-  "/avatars/av18.jpg",
-  "/avatars/av19.jpg",
-  "/avatars/av20.jpg",
-  "/avatars/av21.jpg",
 ];
 
 function pickAvatar(usedAvatars: Set<string>): string {
