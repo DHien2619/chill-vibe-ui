@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
 
   switch (action) {
     case "JOIN": {
-      const res = logic.joinSharedRoom(room, String(payload.name || ""));
+      const res = logic.joinSharedRoom(room, String(payload.name || ""), payload.avatar ? String(payload.avatar) : undefined);
       if (!res.ok) return NextResponse.json(res);
       await saveRoom(res.room);
       return NextResponse.json({ ok: true, room: res.room, me: res.me });

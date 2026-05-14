@@ -106,7 +106,7 @@ export type JoinResult =
   | { ok: true; room: RoomState; me: Player }
   | { ok: false; error: string };
 
-export function joinSharedRoom(room: RoomState | null, name: string): JoinResult {
+export function joinSharedRoom(room: RoomState | null, name: string, preferredAvatar?: string): JoinResult {
   const trimmed = name.trim();
   if (!trimmed) return { ok: false, error: "Vui lòng nhập tên" };
   if (trimmed.length > 16) return { ok: false, error: "Tên tối đa 16 ký tự" };
@@ -126,7 +126,7 @@ export function joinSharedRoom(room: RoomState | null, name: string): JoinResult
       joinedAt: now,
       lastSeen: now,
       isHost: true,
-      avatar: pickAvatar(new Set()),
+      avatar: preferredAvatar || pickAvatar(new Set()),
     };
     const newRoom: RoomState = {
       code: SHARED_CODE,
@@ -154,13 +154,16 @@ export function joinSharedRoom(room: RoomState | null, name: string): JoinResult
   const used = new Set(
     active.players.map((p) => p.avatar).filter(Boolean) as string[]
   );
+  const chosenAvatar = preferredAvatar && !used.has(preferredAvatar)
+    ? preferredAvatar
+    : pickAvatar(used);
   const me: Player = {
     id: generatePlayerId(),
     name: trimmed,
     joinedAt: now,
     lastSeen: now,
     isHost: false,
-    avatar: pickAvatar(used),
+    avatar: chosenAvatar,
   };
   const players = [...active.players, me];
   return {

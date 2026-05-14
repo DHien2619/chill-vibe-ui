@@ -58,8 +58,8 @@ export async function fetchRoom(): Promise<RoomState | null> {
   }
 }
 
-export async function joinSharedRoom(name: string): Promise<JoinResult> {
-  const res = await postAction("JOIN", { name });
+export async function joinSharedRoom(name: string, avatar?: string): Promise<JoinResult> {
+  const res = await postAction("JOIN", { name, avatar });
   if (!res.ok) return res;
   if (res.me && res.room) {
     saveMe(res.me);

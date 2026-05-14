@@ -3,16 +3,19 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, HelpCircle, RotateCcw } from "lucide-react";
+import { ArrowLeft, RotateCcw } from "lucide-react";
 import { joinSharedRoom, loadMe, resetRoom } from "@/lib/room-store";
+import { AVATARS } from "@/lib/room-logic";
 
 export default function PlayPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
+  const [avatar, setAvatar] = useState("");
 
   useEffect(() => {
+    setAvatar(AVATARS[Math.floor(Math.random() * AVATARS.length)]);
     router.prefetch("/room");
     const me = loadMe();
     if (me) router.replace("/room");
@@ -26,7 +29,7 @@ export default function PlayPage() {
     e.preventDefault();
     if (busy) return;
     setBusy(true);
-    const res = await joinSharedRoom(name);
+    const res = await joinSharedRoom(name, avatar);
     if (!res.ok) {
       setErr(res.error);
       setBusy(false);
@@ -47,7 +50,7 @@ export default function PlayPage() {
     setErr("");
     setBusy(true);
     await resetRoom();
-    const res = await joinSharedRoom(name);
+    const res = await joinSharedRoom(name, avatar);
     if (!res.ok) {
       setErr(res.error);
       setBusy(false);
@@ -86,14 +89,21 @@ export default function PlayPage() {
       <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-5">
         <form onSubmit={handleSubmit} className="w-full max-w-sm flex flex-col items-center">
           <div
-            className="w-28 h-28 rounded-3xl flex items-center justify-center mb-6"
+            className="w-28 h-28 rounded-3xl overflow-hidden mb-6"
             style={{
               background: "linear-gradient(155deg, #3b2566, #1a1030)",
               border: "2px solid rgba(192,132,252,0.4)",
               boxShadow: "0 0 28px rgba(192,132,252,0.4)",
             }}
           >
-            <HelpCircle size={56} color="#c4b3e0" strokeWidth={1.5} />
+            {avatar && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={avatar}
+                alt="Avatar"
+                className="w-full h-full object-cover"
+              />
+            )}
           </div>
 
           <h1 className="text-3xl font-black text-white mb-1">Tên của bạn?</h1>
