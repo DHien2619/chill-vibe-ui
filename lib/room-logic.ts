@@ -247,15 +247,15 @@ export function startGame(room: RoomState, byHostId: string): StartResult {
   if (playersForRoles.length < 3) {
     return { ok: false, error: "Cần ít nhất 3 người chơi (chưa tính quản trò)" };
   }
-  const total = configCount(room.config);
-  if (total !== playersForRoles.length) {
-    return {
-      ok: false,
-      error: `Tổng số vai trò (${total}) phải bằng số người chơi (${playersForRoles.length})`,
-    };
-  }
 
   const roleList = expandConfigToList(room.config);
+  // Pad villager nếu thiếu role, cắt bớt nếu thừa — quản trò không cần cân chính xác
+  while (roleList.length < playersForRoles.length) {
+    roleList.push("villager");
+  }
+  if (roleList.length > playersForRoles.length) {
+    roleList.length = playersForRoles.length;
+  }
   for (let i = roleList.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [roleList[i], roleList[j]] = [roleList[j], roleList[i]];
