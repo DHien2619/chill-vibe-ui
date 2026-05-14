@@ -23,6 +23,7 @@ export type {
 export { MAX_PLAYERS, SHARED_CODE, phaseLabel } from "./room-logic";
 
 const ME_KEY = "ms-me";
+const ROOM_CACHE_KEY = "ms-room-cache";
 const POLL_INTERVAL_MS = 5000;
 const API_URL = "/api/room";
 
@@ -62,6 +63,7 @@ export async function joinSharedRoom(name: string): Promise<JoinResult> {
   if (!res.ok) return res;
   if (res.me && res.room) {
     saveMe(res.me);
+    cacheRoom(res.room);
     return { ok: true, room: res.room, me: res.me };
   }
   return { ok: false, error: "Lỗi không xác định" };
@@ -174,6 +176,23 @@ export function loadMe(): { player: Player; code: string } | null {
 export function clearMe(): void {
   if (typeof window === "undefined") return;
   window.sessionStorage.removeItem(ME_KEY);
+}
+
+function cacheRoom(room: RoomState): void {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.setItem(ROOM_CACHE_KEY, JSON.stringify(room));
+}
+
+export function loadCachedRoom(): RoomState | null {
+  if (typeof window === "undefined") return null;
+  const raw = window.sessionStorage.getItem(ROOM_CACHE_KEY);
+  if (!raw) return null;
+  window.sessionStorage.removeItem(ROOM_CACHE_KEY);
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
 }
 
 // --- Subscribe via polling (visibility-aware) ---
