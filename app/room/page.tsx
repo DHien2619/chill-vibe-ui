@@ -34,6 +34,7 @@ import {
   MAX_PLAYERS,
 } from "@/lib/room-store";
 import { ROLE_BY_ID } from "@/lib/roles";
+import * as logic from "@/lib/room-logic";
 
 export default function RoomPage() {
   const router = useRouter();
@@ -115,6 +116,7 @@ export default function RoomPage() {
 
   const handleConfigChange = async (roleId: string, delta: number) => {
     if (!isHost) return;
+    if (room) setRoom(logic.updateConfig(room, roleId, delta, me.id));
     const next = await updateConfig(roleId, delta, me.id);
     if (next) setRoom(next);
   };
@@ -130,6 +132,7 @@ export default function RoomPage() {
   };
 
   const handleReset = async () => {
+    if (room) setRoom(logic.resetToLobby(room, me.id));
     const next = await resetToLobby(me.id);
     if (next) setRoom(next);
   };
@@ -145,22 +148,27 @@ export default function RoomPage() {
   };
 
   const handleTransferHost = async (toId: string) => {
+    if (room) setRoom(logic.transferHost(room, me.id, toId));
+    setSelectedPlayerId(null);
     const next = await transferHost(me.id, toId);
     if (next) setRoom(next);
-    setSelectedPlayerId(null);
   };
 
   const handleAddNote = async (text: string) => {
+    if (room) setRoom(logic.addNote(room, text, me.id));
     const next = await addNote(text, me.id);
     if (next) setRoom(next);
   };
 
   const handleDeleteNote = async (id: string) => {
+    if (room) setRoom(logic.deleteNote(room, id, me.id));
     const next = await deleteNote(id, me.id);
     if (next) setRoom(next);
   };
 
+
   const handleAdvancePhase = async () => {
+    if (room) setRoom(logic.advancePhase(room, me.id));
     const next = await advancePhase(me.id);
     if (next) setRoom(next);
   };
@@ -301,6 +309,7 @@ export default function RoomPage() {
                     isHost={p.isHost}
                     isBot={p.isBot}
                     isDead={p.isDead}
+                    avatar={p.avatar}
                     size="sm"
                     roleLabel={role?.name}
                     roleColor={role?.color}
@@ -477,6 +486,18 @@ export default function RoomPage() {
         const targetRole = targetRoleId ? ROLE_BY_ID[targetRoleId] : undefined;
         const hostInGame = isHost && room.status === "revealing" && !selectedPlayer.isHost;
         const handleQuickAction = async (action: QuickAction) => {
+          // Optimistic: apply pure logic local cho UI feedback tức thì
+          if (room) {
+            let local = logic.addNote(room, `${selectedPlayer.name} ${action.template}`, me.id);
+            if (action.effect === "kill") {
+              local = logic.setPlayerDead(local, me.id, selectedPlayer.id, true);
+            } else if (action.effect === "revive") {
+              local = logic.setPlayerDead(local, me.id, selectedPlayer.id, false);
+            }
+            setRoom(local);
+          }
+          setSelectedPlayerId(null);
+          // Server sync in background
           let next = await addNote(`${selectedPlayer.name} ${action.template}`, me.id);
           if (action.effect === "kill") {
             next = (await setPlayerDead(me.id, selectedPlayer.id, true)) ?? next;
@@ -484,13 +505,19 @@ export default function RoomPage() {
             next = (await setPlayerDead(me.id, selectedPlayer.id, false)) ?? next;
           }
           if (next) setRoom(next);
-          setSelectedPlayerId(null);
         };
         const handleRevive = async () => {
+          // Optimistic
+          if (room) {
+            let local = logic.setPlayerDead(room, me.id, selectedPlayer.id, false);
+            local = logic.addNote(local, `${selectedPlayer.name} được Phù thủy cứu`, me.id);
+            setRoom(local);
+          }
+          setSelectedPlayerId(null);
+          // Server sync
           let next = await setPlayerDead(me.id, selectedPlayer.id, false);
           next = (await addNote(`${selectedPlayer.name} được Phù thủy cứu`, me.id)) ?? next;
           if (next) setRoom(next);
-          setSelectedPlayerId(null);
         };
         return (
           <PlayerActionSheet
