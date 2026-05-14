@@ -14,6 +14,7 @@ import { RoleWheel } from "@/components/features/RoleWheel";
 import { NotesSection } from "@/components/features/HostBoard";
 import {
   loadMe,
+  loadCachedRoom,
   fetchRoom,
   leaveRoom,
   subscribeRoom,
@@ -54,7 +55,12 @@ export default function RoomPage() {
       return;
     }
     setMe(meData.player);
-    fetchRoom().then((r) => setRoom(r));
+    const cached = loadCachedRoom();
+    if (cached) {
+      setRoom(cached);
+    } else {
+      fetchRoom().then((r) => setRoom(r));
+    }
     const unsub = subscribeRoom((next) => {
       if (!next) {
         router.replace("/");

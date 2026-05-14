@@ -119,6 +119,12 @@
     contain: strict;
   }
 
+  @media (max-width: 640px) {
+    .orb {
+      filter: blur(50px);
+    }
+  }
+
   .platform-btn {
     background: rgba(45, 31, 78, 0.7);
     border: 1px solid rgba(192, 132, 252, 0.25);

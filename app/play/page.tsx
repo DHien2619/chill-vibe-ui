@@ -13,6 +13,7 @@ export default function PlayPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
+    router.prefetch("/room");
     const me = loadMe();
     if (me) router.replace("/room");
   }, [router]);
