@@ -29,7 +29,7 @@ export default function HomeHero() {
 
         <p className="text-sm md:text-base mb-10 leading-relaxed" style={{ color: "#c4b3e0" }}>
           Mở web — nhập tên — vào phòng.<br />
-          Nơi cuộc vui biến thành cuộc cãi vã.
+          CÁI LÀNG NÀY ĐIÊN RỒI!
         </p>
 
         <Link
