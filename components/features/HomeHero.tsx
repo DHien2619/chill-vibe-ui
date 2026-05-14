@@ -29,7 +29,7 @@ export default function HomeHero() {
 
         <p className="text-sm md:text-base mb-10 leading-relaxed" style={{ color: "#c4b3e0" }}>
           Mở web — nhập tên — vào phòng.<br />
-          Một đêm, một ván. Tối đa <span className="text-white font-bold">16 người</span>.
+          Nơi cuộc vui thành cuộc cãi vã.
         </p>
 
         <Link
