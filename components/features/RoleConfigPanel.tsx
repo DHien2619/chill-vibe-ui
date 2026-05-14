@@ -37,8 +37,6 @@ export function RoleConfigPanel({
   onChange: (roleId: string, delta: number) => void;
 }) {
   const total = configCount(config);
-  const diff = total - playerCount;
-  const balanced = diff === 0;
 
   return (
     <div
@@ -64,19 +62,13 @@ export function RoleConfigPanel({
         <div
           className="text-xs font-bold px-2.5 py-1 rounded-lg"
           style={{
-            background: balanced
-              ? "rgba(34,197,94,0.15)"
-              : "rgba(239,68,68,0.15)",
-            color: balanced ? "#86efac" : "#fca5a5",
-            border: `1px solid ${balanced ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.3)"}`,
+            background: "rgba(192,132,252,0.12)",
+            color: "#c4b3e0",
+            border: "1px solid rgba(192,132,252,0.25)",
           }}
+          title={`${total} vai trò đã đặt cho ${playerCount} người chơi. Thiếu/thừa sẽ tự pad Dân hoặc cắt khi bắt đầu.`}
         >
           {total}/{playerCount}
-          {!balanced && (
-            <span className="ml-1 opacity-80">
-              ({diff > 0 ? "+" : ""}{diff})
-            </span>
-          )}
         </div>
       </div>
 

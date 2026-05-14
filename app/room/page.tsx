@@ -33,7 +33,7 @@ import {
   type RoomState,
   MAX_PLAYERS,
 } from "@/lib/room-store";
-import { configCount, ROLE_BY_ID } from "@/lib/roles";
+import { ROLE_BY_ID } from "@/lib/roles";
 
 export default function RoomPage() {
   const router = useRouter();
@@ -105,10 +105,7 @@ export default function RoomPage() {
   const isHost = me.id === room.hostId;
   const filled = room.players.length;
   const playersForRoles = filled - 1;
-  const total = configCount(room.config);
-  const balanced = total === playersForRoles;
-  const canStart =
-    isHost && playersForRoles >= 3 && balanced && room.status === "lobby";
+  const canStart = isHost && playersForRoles >= 3 && room.status === "lobby";
 
   const handleLeave = async () => {
     if (typeof window !== "undefined") window.sessionStorage.removeItem("ms-me");
@@ -424,8 +421,6 @@ export default function RoomPage() {
                 <Play size={18} fill="currentColor" />
                 {playersForRoles < 3
                   ? `Cần thêm ${3 - playersForRoles} người chơi`
-                  : !balanced
-                  ? `Cân lại vai trò (${total}/${playersForRoles})`
                   : "Chia bài & bắt đầu"}
               </button>
             ) : (
