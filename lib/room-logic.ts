@@ -1,0 +1,366 @@
+import { configCount, defaultConfig, expandConfigToList } from "./roles";
+
+export type Player = {
+  id: string;
+  name: string;
+  joinedAt: number;
+  isHost: boolean;
+  isBot?: boolean;
+  lastSeen?: number;
+  isDead?: boolean;
+};
+
+export type RoomStatus = "lobby" | "revealing" | "playing" | "ended";
+export type Phase = "night" | "day";
+
+export type Note = {
+  id: string;
+  text: string;
+  at: number;
+  round: number;
+  phase: Phase;
+};
+
+export type RoomState = {
+  code: string;
+  hostId: string;
+  createdAt: number;
+  players: Player[];
+  maxPlayers: number;
+  status: RoomStatus;
+  config: Record<string, number>;
+  assignments?: Record<string, string>;
+  revealSeed?: number;
+  notes?: Note[];
+  currentRound?: number;
+  currentPhase?: Phase;
+};
+
+export const MAX_PLAYERS = 16;
+export const SHARED_CODE = "MAIN";
+const STALE_AFTER_MS = 90_000;
+
+const BOT_NAMES = [
+  "Linh", "Nam", "An", "Khoa", "My", "Bao",
+  "Lan", "Tu", "Quan", "Hoa", "Dung", "Hung",
+  "Phuc", "Trang", "Minh", "Hue",
+];
+
+export function phaseLabel(phase: Phase, round: number): string {
+  return `${phase === "night" ? "Đêm" : "Ngày"} ${round}`;
+}
+
+export function generatePlayerId(): string {
+  return `p_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function isInactivePlayer(p: Player, now: number): boolean {
+  if (p.isBot) return false;
+  const last = p.lastSeen ?? p.joinedAt;
+  return now - last > STALE_AFTER_MS;
+}
+
+export function pruneInactive(room: RoomState): RoomState {
+  const now = Date.now();
+  const active = room.players.filter((p) => !isInactivePlayer(p, now));
+  if (active.length === room.players.length) return room;
+
+  const humans = active.filter((p) => !p.isBot);
+  if (humans.length === 0) {
+    // Không còn ai thật trong phòng → coi như phòng tan, kéo theo bot
+    return { ...room, players: [] };
+  }
+
+  let hostId = room.hostId;
+  if (!active.find((p) => p.id === hostId)) {
+    const newHost = humans[0];
+    hostId = newHost.id;
+    active.forEach((p) => {
+      p.isHost = p.id === newHost.id;
+    });
+  }
+  return { ...room, players: active, hostId };
+}
+
+// --- Pure action handlers: take RoomState (or null), return new RoomState (or { error }) ---
+
+export type JoinResult =
+  | { ok: true; room: RoomState; me: Player }
+  | { ok: false; error: string };
+
+export function joinSharedRoom(room: RoomState | null, name: string): JoinResult {
+  const trimmed = name.trim();
+  if (!trimmed) return { ok: false, error: "Vui lòng nhập tên" };
+  if (trimmed.length > 16) return { ok: false, error: "Tên tối đa 16 ký tự" };
+
+  let active = room;
+  if (active) {
+    const pruned = pruneInactive(active);
+    active = pruned.players.length === 0 ? null : pruned;
+  }
+
+  const now = Date.now();
+
+  if (!active) {
+    const host: Player = {
+      id: generatePlayerId(),
+      name: trimmed,
+      joinedAt: now,
+      lastSeen: now,
+      isHost: true,
+    };
+    const newRoom: RoomState = {
+      code: SHARED_CODE,
+      hostId: host.id,
+      createdAt: now,
+      players: [host],
+      maxPlayers: MAX_PLAYERS,
+      status: "lobby",
+      config: defaultConfig(0),
+    };
+    return { ok: true, room: newRoom, me: host };
+  }
+
+  if (active.players.length >= active.maxPlayers) {
+    return { ok: false, error: "Phòng đã đầy" };
+  }
+  if (active.status !== "lobby") {
+    return { ok: false, error: "Ván đang diễn ra, vui lòng chờ ván sau" };
+  }
+  const dup = active.players.find(
+    (p) => p.name.toLowerCase() === trimmed.toLowerCase()
+  );
+  if (dup) return { ok: false, error: "Tên này đã có người dùng" };
+
+  const me: Player = {
+    id: generatePlayerId(),
+    name: trimmed,
+    joinedAt: now,
+    lastSeen: now,
+    isHost: false,
+  };
+  const players = [...active.players, me];
+  return {
+    ok: true,
+    room: {
+      ...active,
+      players,
+      config: defaultConfig(Math.max(0, players.length - 1)),
+    },
+    me,
+  };
+}
+
+export function leaveRoom(room: RoomState, playerId: string): RoomState | null {
+  const wasHost = room.hostId === playerId;
+  const remaining = room.players.filter((p) => p.id !== playerId);
+  const humans = remaining.filter((p) => !p.isBot);
+
+  if (humans.length === 0) return null;
+
+  let players = remaining;
+  let hostId = room.hostId;
+  if (wasHost) {
+    const newHost = humans[0];
+    hostId = newHost.id;
+    players = remaining.map((p) => ({ ...p, isHost: p.id === newHost.id }));
+  }
+  return {
+    ...room,
+    players,
+    hostId,
+    config: defaultConfig(Math.max(0, players.length - 1)),
+  };
+}
+
+export function heartbeat(room: RoomState, playerId: string): RoomState {
+  const idx = room.players.findIndex((p) => p.id === playerId);
+  if (idx < 0) return room;
+  return {
+    ...room,
+    players: room.players.map((p, i) =>
+      i === idx ? { ...p, lastSeen: Date.now() } : p
+    ),
+  };
+}
+
+export function addBot(room: RoomState, byHostId: string): RoomState {
+  if (room.hostId !== byHostId) return room;
+  if (room.status !== "lobby") return room;
+  if (room.players.length >= room.maxPlayers) return room;
+
+  const used = new Set(room.players.map((p) => p.name.toLowerCase()));
+  const candidates = BOT_NAMES.filter((n) => !used.has(n.toLowerCase()));
+  const pick =
+    candidates.length > 0
+      ? candidates[Math.floor(Math.random() * candidates.length)]
+      : `Bot ${room.players.length + 1}`;
+
+  const bot: Player = {
+    id: generatePlayerId(),
+    name: pick,
+    joinedAt: Date.now(),
+    isHost: false,
+    isBot: true,
+  };
+  const players = [...room.players, bot];
+  return {
+    ...room,
+    players,
+    config: defaultConfig(Math.max(0, players.length - 1)),
+  };
+}
+
+export function removeAllBots(room: RoomState, byHostId: string): RoomState {
+  if (room.hostId !== byHostId) return room;
+  if (room.status !== "lobby") return room;
+  const players = room.players.filter((p) => !p.isBot);
+  if (players.length === room.players.length) return room;
+  return {
+    ...room,
+    players,
+    config: defaultConfig(Math.max(0, players.length - 1)),
+  };
+}
+
+export function updateConfig(
+  room: RoomState,
+  roleId: string,
+  delta: number,
+  byHostId: string
+): RoomState {
+  if (room.hostId !== byHostId) return room;
+  if (room.status !== "lobby") return room;
+  const next = Math.max(0, (room.config[roleId] || 0) + delta);
+  return { ...room, config: { ...room.config, [roleId]: next } };
+}
+
+export type StartResult =
+  | { ok: true; room: RoomState }
+  | { ok: false; error: string };
+
+export function startGame(room: RoomState, byHostId: string): StartResult {
+  if (room.hostId !== byHostId) return { ok: false, error: "Chỉ quản trò được bắt đầu" };
+  if (room.status !== "lobby") return { ok: false, error: "Ván đã bắt đầu" };
+
+  const playersForRoles = room.players.filter((p) => p.id !== room.hostId);
+  if (playersForRoles.length < 3) {
+    return { ok: false, error: "Cần ít nhất 3 người chơi (chưa tính quản trò)" };
+  }
+  const total = configCount(room.config);
+  if (total !== playersForRoles.length) {
+    return {
+      ok: false,
+      error: `Tổng số vai trò (${total}) phải bằng số người chơi (${playersForRoles.length})`,
+    };
+  }
+
+  const roleList = expandConfigToList(room.config);
+  for (let i = roleList.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [roleList[i], roleList[j]] = [roleList[j], roleList[i]];
+  }
+  const assignments: Record<string, string> = {};
+  playersForRoles.forEach((p, i) => {
+    assignments[p.id] = roleList[i];
+  });
+
+  return {
+    ok: true,
+    room: {
+      ...room,
+      assignments,
+      status: "revealing",
+      revealSeed: Date.now(),
+      currentRound: 1,
+      currentPhase: "night",
+      notes: [],
+      players: room.players.map((p) => ({ ...p, isDead: false })),
+    },
+  };
+}
+
+export function resetToLobby(room: RoomState, byHostId: string): RoomState {
+  if (room.hostId !== byHostId) return room;
+  const next: RoomState = {
+    ...room,
+    status: "lobby",
+    players: room.players.map((p) => ({ ...p, isDead: false })),
+  };
+  delete next.assignments;
+  delete next.revealSeed;
+  delete next.notes;
+  delete next.currentRound;
+  delete next.currentPhase;
+  return next;
+}
+
+export function transferHost(
+  room: RoomState,
+  fromId: string,
+  toId: string
+): RoomState {
+  if (room.hostId !== fromId) return room;
+  const target = room.players.find((p) => p.id === toId);
+  if (!target || target.isBot) return room;
+  return {
+    ...room,
+    players: room.players.map((p) => ({ ...p, isHost: p.id === toId })),
+    hostId: toId,
+  };
+}
+
+export function addNote(
+  room: RoomState,
+  text: string,
+  byHostId: string
+): RoomState {
+  if (room.hostId !== byHostId) return room;
+  const clean = text.trim();
+  if (!clean) return room;
+  const note: Note = {
+    id: `n_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`,
+    text: clean.slice(0, 200),
+    at: Date.now(),
+    round: room.currentRound || 1,
+    phase: room.currentPhase || "night",
+  };
+  return { ...room, notes: [...(room.notes || []), note] };
+}
+
+export function deleteNote(
+  room: RoomState,
+  noteId: string,
+  byHostId: string
+): RoomState {
+  if (room.hostId !== byHostId) return room;
+  return { ...room, notes: (room.notes || []).filter((n) => n.id !== noteId) };
+}
+
+export function advancePhase(room: RoomState, byHostId: string): RoomState {
+  if (room.hostId !== byHostId) return room;
+  if (room.status !== "revealing") return room;
+  const phase = room.currentPhase || "night";
+  const round = room.currentRound || 1;
+  if (phase === "night") {
+    return { ...room, currentPhase: "day", currentRound: round };
+  }
+  return { ...room, currentPhase: "night", currentRound: round + 1 };
+}
+
+export function setPlayerDead(
+  room: RoomState,
+  byHostId: string,
+  targetId: string,
+  dead: boolean
+): RoomState {
+  if (room.hostId !== byHostId) return room;
+  const idx = room.players.findIndex((p) => p.id === targetId);
+  if (idx < 0) return room;
+  return {
+    ...room,
+    players: room.players.map((p) =>
+      p.id === targetId ? { ...p, isDead: dead } : p
+    ),
+  };
+}
