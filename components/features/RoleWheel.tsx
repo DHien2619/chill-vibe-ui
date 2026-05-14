@@ -9,6 +9,12 @@ import {
   Crosshair,
   Smile,
   User,
+  Swords,
+  Shuffle,
+  Wand2,
+  Droplets,
+  Heart,
+  MoonStar,
 } from "lucide-react";
 import type { ComponentType } from "react";
 import {
@@ -26,6 +32,12 @@ const ICONS: Record<string, ComponentType<{ size?: number; color?: string; strok
   Crosshair,
   Smile,
   User,
+  Swords,
+  Shuffle,
+  Wand2,
+  Droplets,
+  Heart,
+  MoonStar,
 };
 
 const TOTAL_STEPS = 20;

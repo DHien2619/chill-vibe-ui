@@ -8,6 +8,12 @@ import {
   Crosshair,
   Smile,
   User,
+  Swords,
+  Shuffle,
+  Wand2,
+  Droplets,
+  Heart,
+  MoonStar,
   Minus,
   Plus,
   Lock,
@@ -23,6 +29,12 @@ const ICONS: Record<string, ComponentType<{ size?: number; color?: string; strok
   Crosshair,
   Smile,
   User,
+  Swords,
+  Shuffle,
+  Wand2,
+  Droplets,
+  Heart,
+  MoonStar,
 };
 
 export function RoleConfigPanel({

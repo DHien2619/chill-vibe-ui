@@ -18,6 +18,11 @@ export const HOST_QUICK_ACTIONS: QuickAction[] = [
   { label: "Phù thủy cứu", template: "được Phù thủy cứu", color: "#c084fc", effect: "revive" },
   { label: "Phù thủy giết", template: "bị Phù thủy giết", color: "#9333ea", effect: "kill" },
   { label: "Thợ săn bắn", template: "bị Thợ săn bắn theo", color: "#f59e0b", effect: "kill" },
+  { label: "TSQT bẫy", template: "được TSQT đặt bẫy", color: "#d97706" },
+  { label: "Sói PS yểm", template: "bị Sói Pháp Sư yểm", color: "#a855f7" },
+  { label: "Mục Sư vẩy", template: "bị Mục Sư vẩy nước thánh", color: "#14b8a6" },
+  { label: "Cupid ghép", template: "được Cupid ghép đôi", color: "#ec4899" },
+  { label: "N.Nữ khóa", template: "bị Nguyệt Nữ khóa chiêu", color: "#818cf8" },
 ];
 
 export function PlayerActionSheet({
