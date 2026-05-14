@@ -4,7 +4,7 @@ import * as logic from "@/lib/room-logic";
 import type { RoomState } from "@/lib/room-logic";
 
 export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
+export const runtime = "edge";
 
 const ROOM_KEY = `room:${logic.SHARED_CODE}`;
 

@@ -44,6 +44,7 @@ export default function RoomPage() {
   const [revealSeen, setRevealSeen] = useState(false);
   const [startErr, setStartErr] = useState("");
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
+  const [starting, setStarting] = useState(false);
 
   useEffect(() => {
     setHydrated(true);
@@ -123,7 +124,9 @@ export default function RoomPage() {
 
   const handleStart = async () => {
     setStartErr("");
+    setStarting(true);
     const res = await startGame(me.id);
+    setStarting(false);
     if (!res.ok) {
       setStartErr(res.error);
       return;
@@ -138,11 +141,13 @@ export default function RoomPage() {
   };
 
   const handleAddBot = async () => {
+    if (room) setRoom(logic.addBot(room, me.id));
     const next = await addBot(me.id);
     if (next) setRoom(next);
   };
 
   const handleRemoveBots = async () => {
+    if (room) setRoom(logic.removeAllBots(room, me.id));
     const next = await removeAllBots(me.id);
     if (next) setRoom(next);
   };
@@ -190,7 +195,7 @@ export default function RoomPage() {
   };
 
   return (
-    <main className="min-h-[100svh] pb-32" style={{ background: "#0e0818" }}>
+    <main className="min-h-[100svh] pb-32 ms-page-enter" style={{ background: "#0e0818" }}>
       <div className="orb w-[500px] h-[500px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-15"
         style={{ background: "radial-gradient(circle, #7c3aed 0%, transparent 65%)" }} />
 
@@ -419,16 +424,18 @@ export default function RoomPage() {
           {room.status === "lobby" ? (
             isHost ? (
               <button
-                disabled={!canStart}
+                disabled={!canStart || starting}
                 onClick={handleStart}
                 className="w-full h-14 rounded-2xl flex items-center justify-center gap-2 text-base font-black uppercase tracking-wider text-white disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{
                   background: "linear-gradient(135deg, #c084fc 0%, #f97316 100%)",
-                  boxShadow: canStart ? "0 10px 32px rgba(192,132,252,0.4)" : "none",
+                  boxShadow: canStart && !starting ? "0 10px 32px rgba(192,132,252,0.4)" : "none",
                 }}
               >
                 <Play size={18} fill="currentColor" />
-                {playersForRoles < 3
+                {starting
+                  ? "Đang chia bài..."
+                  : playersForRoles < 3
                   ? `Cần thêm ${3 - playersForRoles} người chơi`
                   : "Chia bài & bắt đầu"}
               </button>
