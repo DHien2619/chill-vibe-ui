@@ -165,15 +165,6 @@ export function PlayerActionSheet({
           </p>
         ) : null}
 
-        <style>{`
-          .ms-sheet {
-            animation: ms-sheet-in 220ms cubic-bezier(0.18, 0.9, 0.32, 1);
-          }
-          @keyframes ms-sheet-in {
-            0%   { transform: translateY(20px); opacity: 0; }
-            100% { transform: translateY(0);     opacity: 1; }
-          }
-        `}</style>
       </div>
     </div>
   );

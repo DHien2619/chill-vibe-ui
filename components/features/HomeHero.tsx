@@ -5,7 +5,7 @@ import { Moon, Play } from "lucide-react";
 
 export default function HomeHero() {
   return (
-    <section className="relative min-h-[100svh] flex flex-col items-center justify-center px-5 py-12 overflow-hidden">
+    <section className="relative min-h-[100svh] flex flex-col items-center justify-center px-5 py-12 overflow-hidden ms-page-enter">
       <div className="orb w-[420px] h-[420px] top-[-100px] left-[-80px] opacity-30"
         style={{ background: "radial-gradient(circle, #7c3aed 0%, transparent 65%)" }} />
       <div className="orb w-[360px] h-[360px] bottom-[-80px] right-[-60px] opacity-25"

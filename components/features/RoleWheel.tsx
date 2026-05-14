@@ -170,16 +170,6 @@ function FlashCard({ role, stepKey }: { role: RoleType; stepKey: number }) {
         <h3 className="text-2xl font-black text-white mt-1">{role.name}</h3>
       </div>
 
-      <style>{`
-        .ms-flash {
-          animation: ms-flash-pop 140ms ease-out;
-        }
-        @keyframes ms-flash-pop {
-          0%   { transform: scale(0.92); opacity: 0.6; }
-          60%  { transform: scale(1.04); opacity: 1; }
-          100% { transform: scale(1);    opacity: 1; }
-        }
-      `}</style>
     </div>
   );
 }
@@ -239,16 +229,6 @@ function RoleReveal({ role, onDone }: { role: RoleType | undefined; onDone: () =
         Đã rõ
       </button>
 
-      <style>{`
-        .ms-reveal {
-          animation: ms-reveal-in 420ms cubic-bezier(0.18, 1.2, 0.4, 1);
-        }
-        @keyframes ms-reveal-in {
-          0%   { transform: scale(0.85); opacity: 0; }
-          60%  { transform: scale(1.04); opacity: 1; }
-          100% { transform: scale(1);    opacity: 1; }
-        }
-      `}</style>
     </div>
   );
 }

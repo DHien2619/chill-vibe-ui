@@ -61,7 +61,7 @@ export default function PlayPage() {
     err.includes("đã có người dùng");
 
   return (
-    <main className="min-h-[100svh] flex flex-col" style={{ background: "#0e0818" }}>
+    <main className="min-h-[100svh] flex flex-col ms-page-enter" style={{ background: "#0e0818" }}>
       <div className="orb w-[360px] h-[360px] top-[-100px] right-[-60px] opacity-25"
         style={{ background: "radial-gradient(circle, #7c3aed 0%, transparent 65%)" }} />
       <div className="orb w-[320px] h-[320px] bottom-[-100px] left-[-60px] opacity-20"
