@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -13,8 +13,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Kwtor — Fantasy Card Game",
-  description: "Collect powerful cards, battle epic enemies, and dominate the realm. Available on iPhone, Android & iPad.",
+  title: "Đêm Ma Sói — One Night Werewolf",
+  description: "Chơi Ma Sói cùng bạn bè qua điện thoại. Tạo phòng, mời mã, lên đến 16 người. Một đêm, một ván, đầy bất ngờ.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: "#0e0818",
 };
 
 export default function RootLayout({
