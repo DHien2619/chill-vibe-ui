@@ -155,6 +155,30 @@ export async function POST(req: NextRequest) {
       await saveRoom(next);
       return NextResponse.json({ ok: true, room: next });
     }
+    case "SET_TRAPPED": {
+      if (!room) return NextResponse.json({ ok: false, error: "Không tìm thấy phòng" });
+      const next3 = logic.setPlayerTrapped(
+        room, String(payload.byHostId || ""), String(payload.targetId || ""), Boolean(payload.value)
+      );
+      await saveRoom(next3);
+      return NextResponse.json({ ok: true, room: next3 });
+    }
+    case "SET_LOCKED": {
+      if (!room) return NextResponse.json({ ok: false, error: "Không tìm thấy phòng" });
+      const next4 = logic.setPlayerLocked(
+        room, String(payload.byHostId || ""), String(payload.targetId || ""), Boolean(payload.value)
+      );
+      await saveRoom(next4);
+      return NextResponse.json({ ok: true, room: next4 });
+    }
+    case "SET_CUPID_PAIR": {
+      if (!room) return NextResponse.json({ ok: false, error: "Không tìm thấy phòng" });
+      const next5 = logic.setCupidPair(
+        room, String(payload.byHostId || ""), String(payload.targetId || "")
+      );
+      await saveRoom(next5);
+      return NextResponse.json({ ok: true, room: next5 });
+    }
     case "RESET_ROOM": {
       await saveRoom(null);
       return NextResponse.json({ ok: true, room: null });

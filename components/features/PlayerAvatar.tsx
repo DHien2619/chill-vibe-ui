@@ -1,7 +1,7 @@
 "use client";
 
 import { memo } from "react";
-import { HelpCircle, Bot, Crown, Skull } from "lucide-react";
+import { HelpCircle, Bot, Crown, Skull, Heart, Lock, Target } from "lucide-react";
 
 function PlayerAvatarRaw({
   name,
@@ -10,6 +10,9 @@ function PlayerAvatarRaw({
   isBot = false,
   isEmpty = false,
   isDead = false,
+  isTrapped = false,
+  isLocked = false,
+  isCupidPaired = false,
   avatar,
   size = "md",
   showName = true,
@@ -23,6 +26,9 @@ function PlayerAvatarRaw({
   isBot?: boolean;
   isEmpty?: boolean;
   isDead?: boolean;
+  isTrapped?: boolean;
+  isLocked?: boolean;
+  isCupidPaired?: boolean;
   avatar?: string;
   size?: "sm" | "md" | "lg";
   showName?: boolean;
@@ -147,6 +153,47 @@ function PlayerAvatarRaw({
                 }}
               >
                 BẠN
+              </div>
+            )}
+
+            {!isDead && (isCupidPaired || isTrapped || isLocked) && (
+              <div className="absolute -bottom-1 left-0 right-0 flex justify-center gap-1 z-20">
+                {isCupidPaired && (
+                  <div
+                    className="w-5 h-5 rounded-full flex items-center justify-center"
+                    style={{
+                      background: "#ec4899",
+                      boxShadow: "0 0 8px #ec4899",
+                      border: "2px solid #1a1030",
+                    }}
+                  >
+                    <Heart size={10} color="#fff" fill="#fff" />
+                  </div>
+                )}
+                {isTrapped && (
+                  <div
+                    className="w-5 h-5 rounded-full flex items-center justify-center"
+                    style={{
+                      background: "#d97706",
+                      boxShadow: "0 0 8px #d97706",
+                      border: "2px solid #1a1030",
+                    }}
+                  >
+                    <Target size={10} color="#fff" />
+                  </div>
+                )}
+                {isLocked && (
+                  <div
+                    className="w-5 h-5 rounded-full flex items-center justify-center"
+                    style={{
+                      background: "#818cf8",
+                      boxShadow: "0 0 8px #818cf8",
+                      border: "2px solid #1a1030",
+                    }}
+                  >
+                    <Lock size={10} color="#fff" />
+                  </div>
+                )}
               </div>
             )}
 

@@ -29,6 +29,9 @@ import {
   advancePhase,
   heartbeat,
   setPlayerDead,
+  setPlayerTrapped,
+  setPlayerLocked,
+  setCupidPair,
   saveMe,
   type Player,
   type RoomState,
@@ -320,6 +323,9 @@ export default function RoomPage() {
                     isHost={p.isHost}
                     isBot={p.isBot}
                     isDead={p.isDead}
+                    isTrapped={p.isTrapped}
+                    isLocked={p.isLocked}
+                    isCupidPaired={room.cupidPair?.length === 2 && room.cupidPair.includes(p.id)}
                     avatar={p.avatar}
                     size="sm"
                     roleLabel={role?.name}
@@ -499,23 +505,45 @@ export default function RoomPage() {
         const targetRole = targetRoleId ? ROLE_BY_ID[targetRoleId] : undefined;
         const hostInGame = isHost && room.status === "revealing" && !selectedPlayer.isHost;
         const handleQuickAction = async (action: QuickAction) => {
-          // Optimistic: apply pure logic local cho UI feedback tức thì
           if (room) {
             let local = logic.addNote(room, `${selectedPlayer.name} ${action.template}`, me.id);
             if (action.effect === "kill") {
+              const partnerBefore = room.cupidPair?.length === 2
+                ? room.players.find((p) => room.cupidPair!.includes(p.id) && p.id !== selectedPlayer.id && !p.isDead)
+                : undefined;
               local = logic.setPlayerDead(local, me.id, selectedPlayer.id, true);
+              if (partnerBefore) {
+                local = logic.addNote(local, `${partnerBefore.name} chết theo (Cupid)`, me.id);
+              }
             } else if (action.effect === "revive") {
               local = logic.setPlayerDead(local, me.id, selectedPlayer.id, false);
+            } else if (action.effect === "trap") {
+              local = logic.setPlayerTrapped(local, me.id, selectedPlayer.id, !selectedPlayer.isTrapped);
+            } else if (action.effect === "lock") {
+              local = logic.setPlayerLocked(local, me.id, selectedPlayer.id, !selectedPlayer.isLocked);
+            } else if (action.effect === "cupidPair") {
+              local = logic.setCupidPair(local, me.id, selectedPlayer.id);
             }
             setRoom(local);
           }
           setSelectedPlayerId(null);
-          // Server sync in background
           let next = await addNote(`${selectedPlayer.name} ${action.template}`, me.id);
           if (action.effect === "kill") {
+            const partnerBefore = room?.cupidPair?.length === 2
+              ? room.players.find((p) => room.cupidPair!.includes(p.id) && p.id !== selectedPlayer.id && !p.isDead)
+              : undefined;
             next = (await setPlayerDead(me.id, selectedPlayer.id, true)) ?? next;
+            if (partnerBefore) {
+              next = (await addNote(`${partnerBefore.name} chết theo (Cupid)`, me.id)) ?? next;
+            }
           } else if (action.effect === "revive") {
             next = (await setPlayerDead(me.id, selectedPlayer.id, false)) ?? next;
+          } else if (action.effect === "trap") {
+            next = (await setPlayerTrapped(me.id, selectedPlayer.id, !selectedPlayer.isTrapped)) ?? next;
+          } else if (action.effect === "lock") {
+            next = (await setPlayerLocked(me.id, selectedPlayer.id, !selectedPlayer.isLocked)) ?? next;
+          } else if (action.effect === "cupidPair") {
+            next = (await setCupidPair(me.id, selectedPlayer.id)) ?? next;
           }
           if (next) setRoom(next);
         };

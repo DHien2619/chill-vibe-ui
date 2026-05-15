@@ -9,6 +9,8 @@ export type Player = {
   lastSeen?: number;
   isDead?: boolean;
   avatar?: string;
+  isTrapped?: boolean;
+  isLocked?: boolean;
 };
 
 export const AVATARS: string[] = [
@@ -57,6 +59,7 @@ export type RoomState = {
   notes?: Note[];
   currentRound?: number;
   currentPhase?: Phase;
+  cupidPair?: string[];
 };
 
 export const MAX_PLAYERS = 16;
@@ -310,7 +313,7 @@ export function startGame(room: RoomState, byHostId: string): StartResult {
       currentRound: 1,
       currentPhase: "night",
       notes: [],
-      players: room.players.map((p) => ({ ...p, isDead: false })),
+      players: room.players.map((p) => ({ ...p, isDead: false, isTrapped: false, isLocked: false })),
     },
   };
 }
@@ -320,13 +323,14 @@ export function resetToLobby(room: RoomState, byHostId: string): RoomState {
   const next: RoomState = {
     ...room,
     status: "lobby",
-    players: room.players.map((p) => ({ ...p, isDead: false })),
+    players: room.players.map((p) => ({ ...p, isDead: false, isTrapped: false, isLocked: false })),
   };
   delete next.assignments;
   delete next.revealSeed;
   delete next.notes;
   delete next.currentRound;
   delete next.currentPhase;
+  delete next.cupidPair;
   return next;
 }
 
@@ -392,10 +396,76 @@ export function setPlayerDead(
   if (room.hostId !== byHostId) return room;
   const idx = room.players.findIndex((p) => p.id === targetId);
   if (idx < 0) return room;
-  return {
+  let updated = {
     ...room,
     players: room.players.map((p) =>
       p.id === targetId ? { ...p, isDead: dead } : p
     ),
   };
+  if (dead && updated.cupidPair?.length === 2) {
+    const [a, b] = updated.cupidPair;
+    if (targetId === a || targetId === b) {
+      const partnerId = targetId === a ? b : a;
+      const partner = updated.players.find((p) => p.id === partnerId);
+      if (partner && !partner.isDead) {
+        updated = {
+          ...updated,
+          players: updated.players.map((p) =>
+            p.id === partnerId ? { ...p, isDead: true } : p
+          ),
+        };
+      }
+    }
+  }
+  return updated;
+}
+
+export function setPlayerTrapped(
+  room: RoomState,
+  byHostId: string,
+  targetId: string,
+  trapped: boolean
+): RoomState {
+  if (room.hostId !== byHostId) return room;
+  if (room.players.findIndex((p) => p.id === targetId) < 0) return room;
+  return {
+    ...room,
+    players: room.players.map((p) =>
+      p.id === targetId ? { ...p, isTrapped: trapped } : p
+    ),
+  };
+}
+
+export function setPlayerLocked(
+  room: RoomState,
+  byHostId: string,
+  targetId: string,
+  locked: boolean
+): RoomState {
+  if (room.hostId !== byHostId) return room;
+  if (room.players.findIndex((p) => p.id === targetId) < 0) return room;
+  return {
+    ...room,
+    players: room.players.map((p) =>
+      p.id === targetId ? { ...p, isLocked: locked } : p
+    ),
+  };
+}
+
+export function setCupidPair(
+  room: RoomState,
+  byHostId: string,
+  targetId: string
+): RoomState {
+  if (room.hostId !== byHostId) return room;
+  if (!room.players.find((p) => p.id === targetId)) return room;
+  const pair = room.cupidPair || [];
+  if (pair.includes(targetId)) {
+    const next = pair.filter((id) => id !== targetId);
+    return { ...room, cupidPair: next.length > 0 ? next : undefined };
+  }
+  if (pair.length >= 2) {
+    return { ...room, cupidPair: [targetId] };
+  }
+  return { ...room, cupidPair: [...pair, targetId] };
 }

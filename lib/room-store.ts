@@ -148,6 +148,32 @@ export async function setPlayerDead(
   return res.ok ? res.room : null;
 }
 
+export async function setPlayerTrapped(
+  byHostId: string,
+  targetId: string,
+  value: boolean
+): Promise<RoomState | null> {
+  const res = await postAction("SET_TRAPPED", { byHostId, targetId, value });
+  return res.ok ? res.room : null;
+}
+
+export async function setPlayerLocked(
+  byHostId: string,
+  targetId: string,
+  value: boolean
+): Promise<RoomState | null> {
+  const res = await postAction("SET_LOCKED", { byHostId, targetId, value });
+  return res.ok ? res.room : null;
+}
+
+export async function setCupidPair(
+  byHostId: string,
+  targetId: string
+): Promise<RoomState | null> {
+  const res = await postAction("SET_CUPID_PAIR", { byHostId, targetId });
+  return res.ok ? res.room : null;
+}
+
 export async function resetRoom(): Promise<void> {
   await postAction("RESET_ROOM");
 }
