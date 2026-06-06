@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, RotateCcw } from "lucide-react";
@@ -10,18 +10,9 @@ import { AVATARS } from "@/lib/room-logic";
 export default function PlayPage() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
-  const [hasName, setHasName] = useState(false);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
   const [avatar, setAvatar] = useState("");
-
-  const getName = () => (inputRef.current?.value ?? "").trim();
-
-  // Đọc value trực tiếp từ DOM — tương thích mọi WebView (Messenger, Zalo, FB...)
-  const syncName = useCallback(() => {
-    setHasName(!!getName());
-    if (err) setErr("");
-  }, [err]);
 
   useEffect(() => {
     setAvatar(AVATARS[Math.floor(Math.random() * AVATARS.length)]);
@@ -30,19 +21,15 @@ export default function PlayPage() {
     if (me) router.replace("/room");
   }, [router]);
 
-  // Polling fallback: kiểm tra input value mỗi 300ms cho WebView không fire event
-  useEffect(() => {
-    const t = window.setInterval(() => {
-      const v = !!getName();
-      setHasName((prev) => (prev !== v ? v : prev));
-    }, 300);
-    return () => window.clearInterval(t);
-  }, []);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const name = getName();
-    if (busy || !name) return;
+    const name = (inputRef.current?.value ?? "").trim();
+    if (busy) return;
+    if (!name) {
+      setErr("Vui lòng nhập tên");
+      return;
+    }
+    setErr("");
     setBusy(true);
     const res = await joinSharedRoom(name, avatar);
     if (!res.ok) {
@@ -54,7 +41,11 @@ export default function PlayPage() {
   };
 
   const handleForceReset = async () => {
-    const name = getName();
+    const name = (inputRef.current?.value ?? "").trim();
+    if (!name) {
+      setErr("Vui lòng nhập tên");
+      return;
+    }
     if (
       !window.confirm(
         "Xoá phòng hiện tại và tạo phòng mới?\nMọi người đang trong phòng sẽ bị mất kết nối."
@@ -133,20 +124,16 @@ export default function PlayPage() {
             <input
               ref={inputRef}
               type="text"
-              defaultValue=""
-              onInput={syncName}
-              onChange={syncName}
-              onKeyUp={syncName}
-              onBlur={syncName}
               maxLength={16}
               placeholder="vd: Linh, Nam, ..."
               enterKeyHint="go"
               autoComplete="off"
-              autoCorrect="off"
-              className="w-full h-14 px-4 rounded-xl text-lg text-white outline-none focus:border-purple-400"
+              className="w-full h-14 px-4 rounded-xl text-lg text-white outline-none"
               style={{
                 background: "rgba(45,31,78,0.6)",
                 border: "1.5px solid rgba(192,132,252,0.3)",
+                WebkitAppearance: "none",
+                fontSize: "16px",
               }}
             />
           </label>
@@ -168,8 +155,7 @@ export default function PlayPage() {
             <button
               type="button"
               onClick={handleForceReset}
-              disabled={!hasName}
-              className="w-full h-11 mb-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full h-11 mb-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold uppercase tracking-wider"
               style={{
                 background: "rgba(251,191,36,0.15)",
                 color: "#fcd34d",
@@ -183,7 +169,7 @@ export default function PlayPage() {
 
           <button
             type="submit"
-            disabled={busy || !hasName}
+            disabled={busy}
             className="w-full h-14 rounded-2xl flex items-center justify-center gap-2 text-base font-black uppercase tracking-wider text-white disabled:opacity-40 disabled:cursor-not-allowed"
             style={{
               background: "linear-gradient(135deg, #c084fc 0%, #f97316 100%)",
