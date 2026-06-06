@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, RotateCcw } from "lucide-react";
@@ -9,10 +9,19 @@ import { AVATARS } from "@/lib/room-logic";
 
 export default function PlayPage() {
   const router = useRouter();
-  const [name, setName] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [hasName, setHasName] = useState(false);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
   const [avatar, setAvatar] = useState("");
+
+  const getName = () => (inputRef.current?.value ?? "").trim();
+
+  // Đọc value trực tiếp từ DOM — tương thích mọi WebView (Messenger, Zalo, FB...)
+  const syncName = useCallback(() => {
+    setHasName(!!getName());
+    if (err) setErr("");
+  }, [err]);
 
   useEffect(() => {
     setAvatar(AVATARS[Math.floor(Math.random() * AVATARS.length)]);
@@ -21,13 +30,19 @@ export default function PlayPage() {
     if (me) router.replace("/room");
   }, [router]);
 
+  // Polling fallback: kiểm tra input value mỗi 300ms cho WebView không fire event
   useEffect(() => {
-    setErr("");
-  }, [name]);
+    const t = window.setInterval(() => {
+      const v = !!getName();
+      setHasName((prev) => (prev !== v ? v : prev));
+    }, 300);
+    return () => window.clearInterval(t);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (busy) return;
+    const name = getName();
+    if (busy || !name) return;
     setBusy(true);
     const res = await joinSharedRoom(name, avatar);
     if (!res.ok) {
@@ -38,8 +53,8 @@ export default function PlayPage() {
     router.push("/room");
   };
 
-  // Xoá hẳn phòng cũ rồi tạo lại — dùng khi phòng kẹt do user cũ chưa rời/đóng tab
   const handleForceReset = async () => {
+    const name = getName();
     if (
       !window.confirm(
         "Xoá phòng hiện tại và tạo phòng mới?\nMọi người đang trong phòng sẽ bị mất kết nối."
@@ -116,10 +131,13 @@ export default function PlayPage() {
               Nhập tên
             </span>
             <input
+              ref={inputRef}
               type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onInput={(e) => setName((e.target as HTMLInputElement).value)}
+              defaultValue=""
+              onInput={syncName}
+              onChange={syncName}
+              onKeyUp={syncName}
+              onBlur={syncName}
               maxLength={16}
               placeholder="vd: Linh, Nam, ..."
               enterKeyHint="go"
@@ -150,7 +168,7 @@ export default function PlayPage() {
             <button
               type="button"
               onClick={handleForceReset}
-              disabled={!name.trim()}
+              disabled={!hasName}
               className="w-full h-11 mb-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed"
               style={{
                 background: "rgba(251,191,36,0.15)",
@@ -165,7 +183,7 @@ export default function PlayPage() {
 
           <button
             type="submit"
-            disabled={busy || !name.trim()}
+            disabled={busy || !hasName}
             className="w-full h-14 rounded-2xl flex items-center justify-center gap-2 text-base font-black uppercase tracking-wider text-white disabled:opacity-40 disabled:cursor-not-allowed"
             style={{
               background: "linear-gradient(135deg, #c084fc 0%, #f97316 100%)",
