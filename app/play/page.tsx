@@ -119,9 +119,12 @@ export default function PlayPage() {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              onInput={(e) => setName((e.target as HTMLInputElement).value)}
               maxLength={16}
               placeholder="vd: Linh, Nam, ..."
-              autoFocus
+              enterKeyHint="go"
+              autoComplete="off"
+              autoCorrect="off"
               className="w-full h-14 px-4 rounded-xl text-lg text-white outline-none focus:border-purple-400"
               style={{
                 background: "rgba(45,31,78,0.6)",

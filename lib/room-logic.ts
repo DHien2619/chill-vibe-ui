@@ -64,7 +64,7 @@ export type RoomState = {
 
 export const MAX_PLAYERS = 16;
 export const SHARED_CODE = "MAIN";
-const STALE_AFTER_MS = 90_000;
+const STALE_AFTER_MS = 600_000; // 10 phút — cho phép tắt màn hình lâu hơn
 
 const BOT_NAMES = [
   "Linh", "Nam", "An", "Khoa", "My", "Bao",
@@ -207,6 +207,22 @@ export function leaveRoom(room: RoomState, playerId: string): RoomState | null {
   };
 }
 
+export function kickPlayer(
+  room: RoomState,
+  byHostId: string,
+  targetId: string
+): RoomState {
+  if (room.hostId !== byHostId) return room;
+  if (targetId === byHostId) return room; // không tự kick mình
+  const remaining = room.players.filter((p) => p.id !== targetId);
+  if (remaining.length === room.players.length) return room;
+  return {
+    ...room,
+    players: remaining,
+    config: defaultConfig(Math.max(0, remaining.length - 1)),
+  };
+}
+
 export function heartbeat(room: RoomState, playerId: string): RoomState {
   const idx = room.players.findIndex((p) => p.id === playerId);
   if (idx < 0) return room;
@@ -246,6 +262,29 @@ export function addBot(room: RoomState, byHostId: string): RoomState {
     ...room,
     players,
     config: defaultConfig(Math.max(0, players.length - 1)),
+  };
+}
+
+export function renameBot(
+  room: RoomState,
+  byHostId: string,
+  botId: string,
+  newName: string
+): RoomState {
+  if (room.hostId !== byHostId) return room;
+  const trimmed = newName.trim();
+  if (!trimmed || trimmed.length > 16) return room;
+  const target = room.players.find((p) => p.id === botId);
+  if (!target || !target.isBot) return room;
+  const dup = room.players.find(
+    (p) => p.id !== botId && p.name.toLowerCase() === trimmed.toLowerCase()
+  );
+  if (dup) return room;
+  return {
+    ...room,
+    players: room.players.map((p) =>
+      p.id === botId ? { ...p, name: trimmed } : p
+    ),
   };
 }
 

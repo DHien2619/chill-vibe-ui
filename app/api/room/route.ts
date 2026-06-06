@@ -78,6 +78,20 @@ export async function POST(req: NextRequest) {
       await saveRoom(next);
       return NextResponse.json({ ok: true, room: next });
     }
+    case "KICK_PLAYER": {
+      if (!room) return NextResponse.json({ ok: false, error: "Không tìm thấy phòng" });
+      const next = logic.kickPlayer(room, String(payload.byHostId || ""), String(payload.targetId || ""));
+      await saveRoom(next);
+      return NextResponse.json({ ok: true, room: next });
+    }
+    case "RENAME_BOT": {
+      if (!room) return NextResponse.json({ ok: false, error: "Không tìm thấy phòng" });
+      const next = logic.renameBot(
+        room, String(payload.byHostId || ""), String(payload.botId || ""), String(payload.newName || "")
+      );
+      await saveRoom(next);
+      return NextResponse.json({ ok: true, room: next });
+    }
     case "REMOVE_ALL_BOTS": {
       if (!room) return NextResponse.json({ ok: false, error: "Không tìm thấy phòng" });
       const next = logic.removeAllBots(room, String(payload.byHostId || ""));

@@ -1,6 +1,7 @@
 "use client";
 
-import { Crown, X, Heart } from "lucide-react";
+import { useState } from "react";
+import { Crown, X, Heart, UserX, Pencil, Check } from "lucide-react";
 import type { Player } from "@/lib/room-store";
 
 export type QuickAction = {
@@ -30,6 +31,10 @@ export function PlayerActionSheet({
   targetRole,
   canTransferHost,
   onTransferHost,
+  canKick,
+  onKick,
+  canRenameBot,
+  onRenameBot,
   quickActions,
   onQuickAction,
   onRevive,
@@ -39,6 +44,10 @@ export function PlayerActionSheet({
   targetRole?: { name: string; color: string };
   canTransferHost: boolean;
   onTransferHost: () => void;
+  canKick?: boolean;
+  onKick?: () => void;
+  canRenameBot?: boolean;
+  onRenameBot?: (newName: string) => void;
   quickActions?: QuickAction[];
   onQuickAction?: (action: QuickAction) => void;
   onRevive?: () => void;
@@ -46,6 +55,16 @@ export function PlayerActionSheet({
 }) {
   const isDead = !!target.isDead;
   const hasQuickActions = quickActions && quickActions.length > 0 && onQuickAction;
+  const [renaming, setRenaming] = useState(false);
+  const [draftName, setDraftName] = useState(target.name);
+
+  const submitRename = () => {
+    const trimmed = draftName.trim();
+    if (trimmed && trimmed !== target.name && onRenameBot) {
+      onRenameBot(trimmed);
+    }
+    setRenaming(false);
+  };
 
   return (
     <div
@@ -65,8 +84,48 @@ export function PlayerActionSheet({
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-lg font-black text-white truncate">{target.name}</h3>
-              {targetRole && (
+              {renaming ? (
+                <form
+                  className="flex items-center gap-1.5"
+                  onSubmit={(e) => { e.preventDefault(); submitRename(); }}
+                >
+                  <input
+                    type="text"
+                    value={draftName}
+                    onChange={(e) => setDraftName(e.target.value)}
+                    maxLength={16}
+                    autoFocus
+                    className="h-8 px-2 rounded-lg text-sm text-white outline-none w-28"
+                    style={{
+                      background: "rgba(45,31,78,0.8)",
+                      border: "1.5px solid rgba(192,132,252,0.4)",
+                    }}
+                  />
+                  <button
+                    type="submit"
+                    className="w-7 h-7 rounded-full flex items-center justify-center"
+                    style={{ background: "#22c55e" }}
+                  >
+                    <Check size={14} color="#fff" />
+                  </button>
+                </form>
+              ) : (
+                <>
+                  <h3 className="text-lg font-black text-white truncate">{target.name}</h3>
+                  {canRenameBot && onRenameBot && (
+                    <button
+                      type="button"
+                      onClick={() => { setDraftName(target.name); setRenaming(true); }}
+                      className="w-6 h-6 rounded-full flex items-center justify-center shrink-0"
+                      style={{ background: "rgba(192,132,252,0.2)" }}
+                      aria-label="Đổi tên"
+                    >
+                      <Pencil size={11} color="#c4b3e0" />
+                    </button>
+                  )}
+                </>
+              )}
+              {!renaming && targetRole && (
                 <span
                   className="px-1.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider"
                   style={{
@@ -147,20 +206,40 @@ export function PlayerActionSheet({
           </button>
         )}
 
-        {canTransferHost ? (
-          <button
-            type="button"
-            onClick={onTransferHost}
-            className="w-full h-12 rounded-xl flex items-center justify-center gap-2 text-sm font-black uppercase tracking-wider text-white"
-            style={{
-              background: "linear-gradient(135deg, #fbbf24, #f97316)",
-              boxShadow: "0 8px 24px rgba(251,191,36,0.35)",
-            }}
-          >
-            <Crown size={16} />
-            Làm quản trò
-          </button>
-        ) : !hasQuickActions ? (
+        <div className="flex gap-2">
+          {canTransferHost && (
+            <button
+              type="button"
+              onClick={onTransferHost}
+              className="flex-1 h-12 rounded-xl flex items-center justify-center gap-2 text-sm font-black uppercase tracking-wider text-white"
+              style={{
+                background: "linear-gradient(135deg, #fbbf24, #f97316)",
+                boxShadow: "0 8px 24px rgba(251,191,36,0.35)",
+              }}
+            >
+              <Crown size={16} />
+              Làm quản trò
+            </button>
+          )}
+
+          {canKick && onKick && (
+            <button
+              type="button"
+              onClick={onKick}
+              className={`${canTransferHost ? "w-12" : "flex-1"} h-12 rounded-xl flex items-center justify-center gap-2 text-sm font-black uppercase tracking-wider`}
+              style={{
+                background: "rgba(239,68,68,0.15)",
+                color: "#fca5a5",
+                border: "1px solid rgba(239,68,68,0.3)",
+              }}
+            >
+              <UserX size={16} />
+              {!canTransferHost && "Kick"}
+            </button>
+          )}
+        </div>
+
+        {!canTransferHost && !canKick && !hasQuickActions && (
           <p className="text-xs text-center py-3" style={{ color: "#9d7fd4" }}>
             {target.isBot
               ? "Không thể giao quản trò cho bot"
@@ -168,7 +247,7 @@ export function PlayerActionSheet({
               ? "Đây là quản trò hiện tại"
               : "Chỉ quản trò mới có thể chuyển quyền"}
           </p>
-        ) : null}
+        )}
 
       </div>
     </div>

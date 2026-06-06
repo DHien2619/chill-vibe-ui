@@ -32,6 +32,8 @@ import {
   setPlayerTrapped,
   setPlayerLocked,
   setCupidPair,
+  kickPlayer,
+  renameBot,
   saveMe,
   type Player,
   type RoomState,
@@ -89,14 +91,21 @@ export default function RoomPage() {
     }
   }, [room, me]);
 
-  // Heartbeat: cập nhật lastSeen mỗi 30s + 1 lần ngay khi vào
+  // Heartbeat: cập nhật lastSeen mỗi 30s + gửi ngay khi mở lại màn hình
   useEffect(() => {
     if (!me) return;
     void heartbeat(me.id);
     const t = window.setInterval(() => {
       if (document.visibilityState === "visible") void heartbeat(me.id);
     }, 30_000);
-    return () => window.clearInterval(t);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void heartbeat(me.id);
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearInterval(t);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [me]);
 
   const slots = useMemo(() => {
@@ -548,18 +557,35 @@ export default function RoomPage() {
           if (next) setRoom(next);
         };
         const handleRevive = async () => {
-          // Optimistic
           if (room) {
             let local = logic.setPlayerDead(room, me.id, selectedPlayer.id, false);
             local = logic.addNote(local, `${selectedPlayer.name} được Phù thủy cứu`, me.id);
             setRoom(local);
           }
           setSelectedPlayerId(null);
-          // Server sync
           let next = await setPlayerDead(me.id, selectedPlayer.id, false);
           next = (await addNote(`${selectedPlayer.name} được Phù thủy cứu`, me.id)) ?? next;
           if (next) setRoom(next);
         };
+        const handleKick = async () => {
+          if (room) {
+            setRoom(logic.kickPlayer(room, me.id, selectedPlayer.id));
+          }
+          setSelectedPlayerId(null);
+          const next = await kickPlayer(me.id, selectedPlayer.id);
+          if (next) setRoom(next);
+        };
+        const handleRenameBot = async (newName: string) => {
+          if (room) {
+            setRoom(logic.renameBot(room, me.id, selectedPlayer.id, newName));
+          }
+          setSelectedPlayerId(null);
+          const next = await renameBot(me.id, selectedPlayer.id, newName);
+          if (next) setRoom(next);
+        };
+        const inLobby = room.status === "lobby";
+        const canKickThis = isHost && !selectedPlayer.isHost && inLobby;
+        const canRenameThis = isHost && !!selectedPlayer.isBot && inLobby;
         return (
           <PlayerActionSheet
             target={selectedPlayer}
@@ -568,11 +594,15 @@ export default function RoomPage() {
             }
             canTransferHost={
               isHost &&
-              room.status === "lobby" &&
+              inLobby &&
               !selectedPlayer.isBot &&
               !selectedPlayer.isHost
             }
             onTransferHost={() => handleTransferHost(selectedPlayer.id)}
+            canKick={canKickThis}
+            onKick={canKickThis ? handleKick : undefined}
+            canRenameBot={canRenameThis}
+            onRenameBot={canRenameThis ? handleRenameBot : undefined}
             quickActions={hostInGame ? HOST_QUICK_ACTIONS : undefined}
             onQuickAction={hostInGame ? handleQuickAction : undefined}
             onRevive={hostInGame ? handleRevive : undefined}

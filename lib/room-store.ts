@@ -87,6 +87,20 @@ export async function removeAllBots(byHostId: string): Promise<RoomState | null>
   return res.ok ? res.room : null;
 }
 
+export async function kickPlayer(byHostId: string, targetId: string): Promise<RoomState | null> {
+  const res = await postAction("KICK_PLAYER", { byHostId, targetId });
+  return res.ok ? res.room : null;
+}
+
+export async function renameBot(
+  byHostId: string,
+  botId: string,
+  newName: string
+): Promise<RoomState | null> {
+  const res = await postAction("RENAME_BOT", { byHostId, botId, newName });
+  return res.ok ? res.room : null;
+}
+
 export async function updateConfig(
   roleId: string,
   delta: number,
