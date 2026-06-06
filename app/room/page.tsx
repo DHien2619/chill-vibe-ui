@@ -35,6 +35,7 @@ import {
   kickPlayer,
   renameBot,
   saveMe,
+  clearMe,
   type Player,
   type RoomState,
   MAX_PLAYERS,
@@ -68,7 +69,14 @@ export default function RoomPage() {
     }
     const unsub = subscribeRoom((next) => {
       if (!next) {
+        clearMe();
         router.replace("/");
+        return;
+      }
+      // Bị kick: me không còn trong room → redirect ra ngoài
+      if (!next.players.find((p) => p.id === meData.player.id)) {
+        clearMe();
+        router.replace("/play");
         return;
       }
       setRoom(next);
