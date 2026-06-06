@@ -67,21 +67,47 @@ export default function RoomPage() {
     } else {
       fetchRoom().then((r) => setRoom(r));
     }
+    // Bounce có grace: KHÔNG đá ngay khi 1 poll thiếu me (tránh race lúc server
+    // đang lưu JOIN, hoặc sự cố nhất thời). Chỉ đá khi đã từng thấy mình trong
+    // phòng RỒI biến mất liên tục ~10s (kick thật) — và hủy nếu xuất hiện lại.
+    let seenPresent = false;
+    let bounceTimer: number | null = null;
+    const cancelBounce = () => {
+      if (bounceTimer != null) {
+        window.clearTimeout(bounceTimer);
+        bounceTimer = null;
+      }
+    };
     const unsub = subscribeRoom((next) => {
       if (!next) {
+        // Phòng tan (host reset / mọi người rời) → về trang chủ
+        cancelBounce();
         clearMe();
         router.replace("/");
         return;
       }
-      // Bị kick: me không còn trong room → redirect ra ngoài
-      if (!next.players.find((p) => p.id === meData.player.id)) {
-        clearMe();
-        router.replace("/play");
+      const present = next.players.some((p) => p.id === meData.player.id);
+      if (present) {
+        seenPresent = true;
+        cancelBounce();
+        setRoom(next);
         return;
       }
-      setRoom(next);
+      // me không có trong danh sách:
+      // - Chưa từng xác nhận present (poll đầu đua với server đang lưu JOIN) → chờ.
+      if (!seenPresent) return;
+      // - Đã present rồi giờ mất → chờ grace, nếu vẫn mất thì mới đá ra /play.
+      if (bounceTimer == null) {
+        bounceTimer = window.setTimeout(() => {
+          clearMe();
+          router.replace("/play");
+        }, 10_000);
+      }
     });
-    return unsub;
+    return () => {
+      cancelBounce();
+      unsub();
+    };
   }, [router]);
 
   useEffect(() => {
@@ -136,7 +162,7 @@ export default function RoomPage() {
   const canStart = isHost && playersForRoles >= 3 && room.status === "lobby";
 
   const handleLeave = async () => {
-    if (typeof window !== "undefined") window.sessionStorage.removeItem("ms-me");
+    clearMe();
     router.replace("/");
     void leaveRoom(me.id);
   };

@@ -196,15 +196,33 @@ export async function resetRoom(): Promise<void> {
 
 export function saveMe(player: Player): void {
   if (typeof window === "undefined") return;
-  window.sessionStorage.setItem(
-    ME_KEY,
-    JSON.stringify({ player, code: "MAIN" })
-  );
+  const raw = JSON.stringify({ player, code: "MAIN" });
+  // Ghi cả 2 nơi: localStorage bền hơn trong in-app browser iPhone (sessionStorage
+  // đôi khi bị phân vùng/khởi tạo lại qua điều hướng) → tránh mất "me" rồi bị đá về /play.
+  try {
+    window.sessionStorage.setItem(ME_KEY, raw);
+  } catch {}
+  try {
+    window.localStorage.setItem(ME_KEY, raw);
+  } catch {}
 }
 
 export function loadMe(): { player: Player; code: string } | null {
   if (typeof window === "undefined") return null;
-  const raw = window.sessionStorage.getItem(ME_KEY);
+  let raw: string | null = null;
+  try {
+    raw = window.sessionStorage.getItem(ME_KEY);
+  } catch {}
+  if (!raw) {
+    try {
+      raw = window.localStorage.getItem(ME_KEY);
+    } catch {}
+    if (raw) {
+      try {
+        window.sessionStorage.setItem(ME_KEY, raw);
+      } catch {}
+    }
+  }
   if (!raw) return null;
   try {
     return JSON.parse(raw);
@@ -215,7 +233,12 @@ export function loadMe(): { player: Player; code: string } | null {
 
 export function clearMe(): void {
   if (typeof window === "undefined") return;
-  window.sessionStorage.removeItem(ME_KEY);
+  try {
+    window.sessionStorage.removeItem(ME_KEY);
+  } catch {}
+  try {
+    window.localStorage.removeItem(ME_KEY);
+  } catch {}
 }
 
 function cacheRoom(room: RoomState): void {
