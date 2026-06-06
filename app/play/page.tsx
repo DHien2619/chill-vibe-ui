@@ -7,15 +7,23 @@ import { ArrowLeft, RotateCcw } from "lucide-react";
 import { joinSharedRoom, loadMe, resetRoom } from "@/lib/room-store";
 import { AVATARS } from "@/lib/room-logic";
 
+function isInAppBrowser(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  return /FBAN|FBAV|Instagram|Line|Zalo|Messenger/i.test(ua);
+}
+
 export default function PlayPage() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
   const [avatar, setAvatar] = useState("");
+  const [inApp, setInApp] = useState(false);
 
   useEffect(() => {
     setAvatar(AVATARS[Math.floor(Math.random() * AVATARS.length)]);
+    setInApp(isInAppBrowser());
     router.prefetch("/room");
     const me = loadMe();
     if (me) router.replace("/room");
@@ -178,6 +186,29 @@ export default function PlayPage() {
           >
             {busy ? "Đang vào phòng..." : "Vào phòng"}
           </button>
+
+          {inApp && (
+            <a
+              href={`x-safari-https://${typeof window !== "undefined" ? window.location.host : "chill-vibe-ui.vercel.app"}/play`}
+              onClick={(e) => {
+                e.preventDefault();
+                // Fallback: copy link + hướng dẫn
+                const url = window.location.href;
+                if (navigator.clipboard) {
+                  navigator.clipboard.writeText(url);
+                }
+                window.open(url, "_blank");
+              }}
+              className="w-full h-11 mt-2 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold uppercase tracking-wider"
+              style={{
+                background: "rgba(59,130,246,0.15)",
+                color: "#93c5fd",
+                border: "1px solid rgba(59,130,246,0.35)",
+              }}
+            >
+              Nếu không vào được — mở bằng Safari
+            </a>
+          )}
         </form>
       </div>
     </main>
