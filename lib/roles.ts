@@ -134,6 +134,16 @@ export const ROLE_TYPES: RoleType[] = [
     max: 1,
   },
   {
+    id: "stoner",
+    name: "Kẻ phê cần",
+    team: "villager",
+    color: "#f472b6",
+    accent: "#be185d",
+    icon: "Cannabis",
+    blurb: "Là Dân thường cho tới Đêm 3 — lúc đó nhớ ra role thật sự của mình (random từ các role trong ván).",
+    max: 1,
+  },
+  {
     id: "villager",
     name: "Dân",
     team: "villager",

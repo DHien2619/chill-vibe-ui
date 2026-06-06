@@ -14,6 +14,7 @@ import {
   Droplets,
   Heart,
   MoonStar,
+  Flower2,
   Minus,
   Plus,
   Lock,
@@ -35,6 +36,7 @@ const ICONS: Record<string, ComponentType<{ size?: number; color?: string; strok
   Droplets,
   Heart,
   MoonStar,
+  Cannabis: Flower2,
 };
 
 export function RoleConfigPanel({

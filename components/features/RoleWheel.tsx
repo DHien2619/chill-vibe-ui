@@ -15,6 +15,7 @@ import {
   Droplets,
   Heart,
   MoonStar,
+  Flower2,
 } from "lucide-react";
 import type { ComponentType } from "react";
 import {
@@ -38,6 +39,7 @@ const ICONS: Record<string, ComponentType<{ size?: number; color?: string; strok
   Droplets,
   Heart,
   MoonStar,
+  Cannabis: Flower2,
 };
 
 const TOTAL_STEPS = 20;

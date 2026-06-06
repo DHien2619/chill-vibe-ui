@@ -423,7 +423,30 @@ export function advancePhase(room: RoomState, byHostId: string): RoomState {
   if (phase === "night") {
     return { ...room, currentPhase: "day", currentRound: round };
   }
-  return { ...room, currentPhase: "night", currentRound: round + 1 };
+  let next: RoomState = { ...room, currentPhase: "night", currentRound: round + 1 };
+
+  // Đêm 3: Kẻ phê cần thức tỉnh — random role từ các role đang có trong ván
+  if (round + 1 === 3 && next.assignments) {
+    const stonerEntries = Object.entries(next.assignments).filter(
+      ([, role]) => role === "stoner"
+    );
+    if (stonerEntries.length > 0) {
+      // Lấy danh sách role gốc đang có trong ván (trừ stoner, villager)
+      const rolesInGame = new Set(Object.values(next.assignments));
+      rolesInGame.delete("stoner");
+      rolesInGame.delete("villager");
+      const pool = Array.from(rolesInGame);
+      if (pool.length > 0) {
+        const newAssignments = { ...next.assignments };
+        for (const [pid] of stonerEntries) {
+          newAssignments[pid] = pool[Math.floor(Math.random() * pool.length)];
+        }
+        next = { ...next, assignments: newAssignments };
+      }
+    }
+  }
+
+  return next;
 }
 
 export function setPlayerDead(
