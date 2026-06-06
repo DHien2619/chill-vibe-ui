@@ -340,9 +340,9 @@ export default function RoomPage() {
                     isHost={p.isHost}
                     isBot={p.isBot}
                     isDead={p.isDead}
-                    isTrapped={p.isTrapped}
-                    isLocked={p.isLocked}
-                    isCupidPaired={room.cupidPair?.length === 2 && room.cupidPair.includes(p.id)}
+                    isTrapped={isHost && p.isTrapped}
+                    isLocked={isHost && p.isLocked}
+                    isCupidPaired={isHost && room.cupidPair?.length === 2 && room.cupidPair.includes(p.id)}
                     avatar={p.avatar}
                     size="sm"
                     roleLabel={role?.name}
